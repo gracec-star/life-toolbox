@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高性价比人生工具箱</title>
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="人生工具箱">
+<style>
+/* VOICE everyday reference tool, calm and exact
+   IDEA a metro map of a life: four lines (life, money, time, freedom) every tip rides on
+   PICTURE the thick four-colour line sized by how many tips each line carries; tap a line to ride it
+   COLOUR white ground, black ink; line colours red, amber, blue, green; night #0e1116
+   TYPE Figtree 800 for numbers and titles + system Chinese sans
+   LAYOUT title and line across the top; sections rail left, cards right; phone stacks with a section picker */
+:root{color-scheme:light dark;--bg:light-dark(#fff,#0e1116);--ink:light-dark(#111,#eef0f3);--mute:light-dark(#5b6068,#a3a9b3);--line:light-dark(#e3e5e8,#262b33);--panel:light-dark(#f5f6f7,#161a21);--red:#e6261f;--amb:#ffb400;--blu:light-dark(#0a5cff,#4f8bff);--grn:light-dark(#00a05a,#25c07a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 "Figtree","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;overflow-x:clip}
+a{color:var(--blu)}
+.band{padding:clamp(20px,3vw,40px) max(4vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font:800 clamp(30px,4.4vw,46px)/1.08 "Figtree","PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:-.02em;margin:0 0 8px;text-wrap:balance}
+.sub{color:var(--mute);margin:0;max-width:62ch}
+.metro{display:flex;margin-top:24px;gap:6px}
+.seg{flex-basis:0;border:0;background:none;padding:0;cursor:pointer;text-align:left;color:var(--ink);font:inherit;min-height:44px}
+.seg i{display:block;height:18px;border-radius:9px;background:var(--c);position:relative}
+.seg i::after{content:"";position:absolute;left:10px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:3px solid var(--ink);box-sizing:border-box}
+.seg b{display:block;font:800 clamp(20px,2.6vw,30px)/1.1 Figtree,sans-serif;margin-top:8px}
+.seg span{font-size:14px;color:var(--mute)}
+.seg[aria-pressed=true] i{outline:3px solid var(--ink);outline-offset:3px}
+.seg:not([aria-pressed=true]).dim i{opacity:.28}
+.seg:focus-visible{outline:2px solid var(--blu);outline-offset:4px;border-radius:6px}
+.tools{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:12px max(4vw,16px)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.search{flex:1 1 260px;display:flex;gap:8px}
+input[type=search],select{font:16px/1.3 inherit;font-family:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+input[type=search]:focus,select:focus{outline:2px solid var(--blu);border-color:transparent}
+.btn,.chip{font:500 14px/1 inherit;font-family:inherit;color:var(--ink);background:var(--panel);border:1.5px solid var(--line);border-radius:999px;padding:0 14px;min-height:40px;cursor:pointer;white-space:nowrap}
+.btn:hover,.chip:hover{border-color:var(--mute)}
+.btn:focus-visible,.chip:focus-visible{outline:2px solid var(--blu);outline-offset:2px}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.solid{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
+.grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.grp>small{font-size:13px;color:var(--mute);margin-right:2px}
+.filters{margin-top:10px;display:flex;flex-wrap:wrap;gap:10px 18px}
+details.more summary{cursor:pointer;font-size:14px;color:var(--mute);min-height:40px;display:flex;align-items:center}
+.main{display:grid;grid-template-columns:260px minmax(0,1fr);gap:32px;max-width:1240px;margin:0 auto;padding:20px max(4vw,16px) 60px}
+.rail{position:sticky;top:170px;align-self:start;max-height:calc(100vh - 190px);overflow:auto;padding-right:6px}
+.rail button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;background:none;border:0;border-left:3px solid var(--line);color:var(--ink);font:14px/1.4 inherit;font-family:inherit;padding:7px 10px;cursor:pointer}
+.rail button:hover{background:var(--panel)}
+.rail button[aria-pressed=true]{border-left-color:var(--red);background:var(--panel);font-weight:700}
+.rail em{font-style:normal;color:var(--mute);font-variant-numeric:tabular-nums}
+.secpick{display:none}
+.status{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;margin-bottom:14px;color:var(--mute);font-size:14px}
+.status b{color:var(--ink);font:800 22px Figtree,sans-serif}
+.intro{background:var(--panel);border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:15px}
+.intro h2{font:800 22px/1.2 inherit;font-family:inherit;margin:0 0 6px}
+.intro p{margin:6px 0}
+.card{border-top:1px solid var(--line);padding:16px 0 16px 18px;position:relative}
+.card::before{content:"";position:absolute;left:0;top:20px;bottom:20px;width:4px;border-radius:2px;background:var(--c)}
+.head{display:flex;gap:10px;align-items:flex-start}
+.head h3{flex:1;margin:0;font-size:17px;line-height:1.45;cursor:pointer}
+.head h3:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.no{color:var(--mute);font:700 13px Figtree,sans-serif;white-space:nowrap;margin-right:6px}
+.star{background:none;border:0;cursor:pointer;width:44px;height:44px;margin:-10px -8px 0 0;flex:none;color:var(--mute);font-size:22px;line-height:1}
+.star[aria-pressed=true]{color:var(--amb)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.tag{font-size:13px;line-height:1;padding:5px 8px;border-radius:6px;background:var(--panel);white-space:nowrap}
+.tag.r3{background:var(--ink);color:var(--bg);font-weight:700}
+.tag.r2{border:1.5px solid var(--ink);background:none;font-weight:700}
+.tag.dis{background:none;border:1.5px dashed var(--red);color:var(--red)}
+.tag.lens{background:var(--c);color:#fff;font-weight:700}
+.tag.lens.amb{color:#111}
+.human{margin:0;max-width:72ch}
+.body{display:none;margin-top:12px;font-size:15px;max-width:76ch}
+.card.open .body{display:block}
+.body dt{font-weight:700;margin-top:10px;font-size:14px}
+.body dd{margin:2px 0 0}
+.body .src{color:var(--mute);font-size:13px;overflow-wrap:anywhere}
+.toggle{background:none;border:0;color:var(--blu);font:14px inherit;font-family:inherit;cursor:pointer;padding:8px 0;min-height:36px}
+.ref{color:var(--blu);text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer;background:none;border:0;padding:0;font:inherit}
+.empty{padding:40px 0;color:var(--mute)}
+.moreBtn{margin:20px 0}
+dialog{border:0;border-radius:16px;padding:0;max-width:min(720px,94vw);width:100%;background:var(--bg);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:22px clamp(16px,4vw,28px) 24px;max-height:80vh;overflow:auto}
+.dlg .card{border:0;padding-top:4px}
+.dlgbar{display:flex;justify-content:flex-end;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+footer{border-top:1px solid var(--line);color:var(--mute);font-size:13px}
+footer p{max-width:90ch;margin:6px 0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media(max-width:960px){.main{grid-template-columns:minmax(0,1fr)}.rail{display:none}.secpick{display:block;flex:1 1 220px}}
+@media(max-width:600px){.seg{min-width:72px}.seg span{font-size:13px;white-space:nowrap}.seg b{font-size:20px}.metro{gap:4px}.tools{position:static}}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <h1>高性价比人生工具箱</h1>
+  <p class="sub"><span id="total">772</span> 条建议，每条写明花掉什么、换回什么、证据多硬。点下面任意一条线，只看这一类收益。</p>
+  <div class="metro" id="metro"></div>
+</div></header>
+
+<div class="tools"><div class="wrap">
+  <div class="row">
+    <div class="search"><input id="q" type="search" placeholder="搜关键词：担保、发票、熬夜、押金……" autocomplete="off"></div>
+    <div class="secpick"><select id="sec" aria-label="选择章节"></select></div>
+    <button class="btn solid" id="rand" type="button">随机抽一条最值得做的</button>
+  </div>
+  <div class="filters">
+    <div class="grp" id="g-r"><small>性价比</small></div>
+    <div class="grp" id="g-g"><small>证据</small></div>
+    <div class="grp" id="g-x"><small>快捷</small></div>
+  </div>
+  <div class="filters"><div class="grp" id="g-who"><small>我的情况</small></div></div>
+  <details class="more"><summary>按成本筛（花不花钱、占不占时间、要不要毅力）</summary>
+    <div class="filters">
+      <div class="grp" id="g-mo"><small>钱</small></div>
+      <div class="grp" id="g-ti"><small>时间</small></div>
+      <div class="grp" id="g-wi"><small>毅力</small></div>
+    </div>
+  </details>
+</div></div>
+
+<div class="main">
+  <nav class="rail" id="rail" aria-label="章节"></nav>
+  <section aria-live="polite">
+    <div class="status"><span><b id="cnt">…</b> 条符合</span><span class="row"><button class="btn" id="sort" type="button">排序：按书中顺序</button><button class="btn" id="reset" type="button">清空筛选</button></span></div>
+    <div id="intro"></div>
+    <div id="list"><p class="empty">正在载入……</p></div>
+  </section>
+</div>
+
+<footer class="band"><div class="wrap">
+  <p>“我的情况”勾的是你符合哪几样，只影响标了适用人群的条目；没标人群的条目人人适用，始终显示。</p>
+  <p>内容来自《高性价比人生指南》（作者 eternity4719，正文提交 49fceab，2026-11-16 最新版），按 <a href="https://creativecommons.org/licenses/by/4.0/deed.zh-hans">CC BY 4.0</a> 许可使用。本页只把原文做成了可检索的工具，条目文字未改动；性价比档照原书检索页的规则算出。原书：<a href="https://github.com/eternity4719/HowToLiveBetter">github.com/eternity4719/HowToLiveBetter</a></p>
+  <p>书里的法律和医疗内容以中国大陆为主，截至 2026 年 9 月；具体到自己的事，以最新官方文件和专业人士意见为准。装到主屏幕后断网也能用。收藏只存在这台手机里。</p>
+</div></footer>
+
+<dialog id="dlg"><div class="dlgbar"><button class="btn" id="dlgGo" type="button">在列表中查看</button><button class="btn" id="dlgX" type="button">关闭</button></div><div class="dlg" id="dlgBody"></div></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+{
+const LENS={死亡率:{l:'换寿命',c:'var(--red)'},金钱:{l:'换钱',c:'var(--amb)',amb:1},时间:{l:'换时间精力',c:'var(--blu)'},自由:{l:'换人身自由',c:'var(--grn)'}};
+const LAB={mo:{'0':'不花钱','少':'花少量钱','多':'花不少钱'},ti:{'少':'顺手','中':'花几小时','多':'每天占时间'},wi:{'否':'不用毅力','些':'要一点毅力','是':'要很多毅力'}};
+const WHO={'女性':'女性','35岁':'35 岁以上','60岁':'60 岁以上','怀孕':'怀孕或备孕','婴幼儿':'家有 3 岁以下孩子','孩子':'家有 3 到 18 岁孩子','老人':'家有老人'};
+const RANK={'极高':0,'高':1,'一般':2};
+const SIDE=[5,8,9,12,14,19];
+const GH='https://github.com/eternity4719/HowToLiveBetter/blob/49fceab4254c8c2df0f7cdb1b2959cab6c451b96/';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let SECS=[],ALL=[],BY={},shown=40,sortVal=false;
+const st={q:'',sec:0,lens:'',r:new Set(),g:new Set(),mo:new Set(),ti:new Set(),wi:new Set(),who:new Set(),fav:false,dis:false,side:false};
+let FAV=new Set();
+try{FAV=new Set(JSON.parse(localStorage.getItem('hlb-fav')||'[]'))}catch(e){}
+const saveFav=()=>{try{localStorage.setItem('hlb-fav',JSON.stringify([...FAV]))}catch(e){}};
+const toast=t=>{const el=$('toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove('on'),1800)};
+
+function rich(text,sec){
+  let s=esc(text);
+  s=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>');
+  s=s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,(m,t,u)=>{u=u.replace(/^\.\.\//,'');if(!/^https?:/.test(u))u=GH+(u.startsWith('docs/')||u.startsWith('book/')?u:'book/'+u);return '<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>'});
+  s=s.replace(/&lt;(https?:\/\/[^\s&]+?)&gt;/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
+  s=s.replace(/(^|[^">\/=])(https?:\/\/[^\s<，。；、）)」]+)/g,'$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  s=s.replace(/第\s*(\d+)\s*节第\s*(\d+)\s*条/g,(m,a,b)=>BY[a+'-'+b]?'<button type="button" class="ref" data-ref="'+a+'-'+b+'">'+m+'</button>':m);
+  s=s.replace(/(见|和|与|、|或|跟|参照|按)第\s*(\d+)\s*条/g,(m,p,b)=>BY[sec+'-'+b]?p+'<button type="button" class="ref" data-ref="'+sec+'-'+b+'">第 '+b+' 条</button>':m);
+  s=s.replace(/见第\s*(\d+)\s*节(?!第)/g,(m,a)=>SECS.some(x=>x.n==a)?'见<button type="button" class="ref" data-sec="'+a+'">第 '+a+' 节</button>':m);
+  return s;
+}
+function card(e,open){
+  const L=LENS[e.ln]||{l:e.ln,c:'var(--mute)'},k=e.s+'-'+e.n,fav=FAV.has(k);
+  const tags=['<span class="tag r'+(3-RANK[e.r])+'">性价比'+e.r+'</span>','<span class="tag lens'+(L.amb?' amb':'')+'" style="--c:'+L.c+'">'+L.l+'</span>','<span class="tag">证据 '+e.g+'</span>',
+    '<span class="tag">'+LAB.mo[e.mo]+'</span>','<span class="tag">'+LAB.ti[e.ti]+'</span>','<span class="tag">'+LAB.wi[e.wi]+'</span>'].concat(e.pp?['<span class="tag">适用：'+e.pp.split(',').map(g=>g.split('+').map(v=>WHO[v]||esc(v)).join('且')).join('、')+'</span>']:[]).concat(e.dis?['<span class="tag dis">有争议</span>']:[]);
+  return '<article class="card'+(open?' open':'')+'" style="--c:'+L.c+'" data-k="'+k+'"><div class="head"><h3 data-open><span class="no">'+e.s+'.'+e.n+'</span>'+rich(e.t,e.s)+'</h3><button type="button" class="star" data-fav aria-pressed="'+fav+'" aria-label="收藏">'+(fav?'★':'☆')+'</button></div>'+
+    '<div class="tags">'+tags.join('')+'</div><p class="human">'+rich(e.h,e.s)+'</p>'+
+    '<dl class="body"><dt>花掉什么</dt><dd>'+rich(e.cost,e.s)+'</dd><dt>换回什么（研究原文的数字）</dt><dd>'+rich(e.gain,e.s)+'</dd>'+(e.note?'<dt>备注</dt><dd>'+rich(e.note,e.s)+'</dd>':'')+'<dt>来源</dt><dd class="src">'+rich(e.src,e.s)+'</dd></dl>'+
+    '<button type="button" class="toggle" data-open>'+(open?'收起':'展开成本、证据和来源')+'</button></article>';
+}
+function match(e){
+  if(st.sec&&e.s!==st.sec)return false;
+  if(st.side&&!SIDE.includes(e.s))return false;
+  if(st.lens&&e.ln!==st.lens)return false;
+  if(st.r.size&&!st.r.has(e.r))return false;
+  if(st.g.size&&!st.g.has(e.g))return false;
+  if(st.mo.size&&!st.mo.has(e.mo))return false;
+  if(st.ti.size&&!st.ti.has(e.ti))return false;
+  if(st.wi.size&&!st.wi.has(e.wi))return false;
+  if(st.who.size&&e.pp){const has=v=>st.who.has(v)||(v==='35岁'&&st.who.has('60岁'));if(!e.pp.split(',').some(g=>g.split('+').every(has)))return false}
+  if(st.fav&&!FAV.has(e.s+'-'+e.n))return false;
+  if(st.dis&&!e.dis)return false;
+  if(st.q){const words=st.q.toLowerCase().split(/\s+/).filter(Boolean);return words.every(w=>e.hay.includes(w))}
+  return true;
+}
+function counts(list){const c={};for(const e of list)c[e.ln]=(c[e.ln]||0)+1;return c}
+function render(){
+  let res=ALL.filter(match);
+  if(sortVal)res=res.slice().sort((a,b)=>RANK[a.r]-RANK[b.r]||a.g.localeCompare(b.g)||a.s-b.s||a.n-b.n);
+  $('cnt').textContent=res.length;
+  const noLens=ALL.filter(e=>{const l=st.lens;st.lens='';const ok=match(e);st.lens=l;return ok});
+  const c=counts(noLens);
+  $('metro').innerHTML=Object.keys(LENS).map(k=>{const n=c[k]||0;return '<button type="button" class="seg'+(st.lens?' dim':'')+'" data-lens="'+k+'" aria-pressed="'+(st.lens===k)+'" style="flex-grow:'+Math.max(n,18)+';--c:'+LENS[k].c+'"><i></i><b>'+n+'</b><span>'+LENS[k].l+'</span></button>'}).join('');
+  const sc={};for(const e of ALL){const s=st.sec;st.sec=0;if(match(e))sc[e.s]=(sc[e.s]||0)+1;st.sec=s}
+  $('rail').innerHTML='<button type="button" data-sec="0" aria-pressed="'+(st.sec===0)+'"><span>全部章节</span><em>'+Object.values(sc).reduce((a,b)=>a+b,0)+'</em></button>'+SECS.map(s=>'<button type="button" data-sec="'+s.n+'" aria-pressed="'+(st.sec===s.n)+'"><span>'+s.n+'. '+esc(s.t.split('：')[0])+'</span><em>'+(sc[s.n]||0)+'</em></button>').join('');
+  $('sec').value=String(st.sec);
+  const S=SECS.find(s=>s.n===st.sec);
+  $('intro').innerHTML=S?'<div class="intro"><h2>'+S.n+'. '+esc(S.t)+'</h2>'+S.intro.slice(0,6).map(p=>'<p>'+rich(p,S.n)+'</p>').join('')+'</div>':'';
+  $('list').innerHTML=res.length?res.slice(0,shown).map(e=>card(e,false)).join('')+(res.length>shown?'<button type="button" class="btn moreBtn" id="more">再显示 40 条（还剩 '+(res.length-shown)+' 条）</button>':''):
+    '<p class="empty">'+(st.fav&&!FAV.size?'还没有收藏。点条目右上角的 ☆ 收藏，之后在这里集中看。':'没有符合的条目，换个关键词或者清空筛选试试。')+'</p>';
+  document.querySelectorAll('[data-f]').forEach(b=>{const [g,v]=b.dataset.f.split(':');b.setAttribute('aria-pressed',g==='x'?String(!!st[v]):String(st[g].has(v)))});
+  $('sort').textContent=sortVal?'排序：性价比优先':'排序：按书中顺序';
+}
+function chips(id,g,vals){$(id).insertAdjacentHTML('beforeend',vals.map(([v,l])=>'<button type="button" class="chip" data-f="'+g+':'+v+'" aria-pressed="false">'+l+'</button>').join(''))}
+chips('g-r','r',[['极高','极高'],['高','高'],['一般','一般']]);
+chips('g-g','g',[['A','A 有确切数字'],['B','B'],['C','C 经验']]);
+chips('g-x','x',[['fav','我的收藏'],['side','副业与做生意相关'],['dis','只看有争议']]);
+chips('g-who','who',Object.entries(WHO));
+chips('g-mo','mo',Object.entries(LAB.mo));chips('g-ti','ti',Object.entries(LAB.ti));chips('g-wi','wi',Object.entries(LAB.wi));
+
+function openDlg(k){const e=BY[k];if(!e)return;$('dlgBody').innerHTML=card(e,true);$('dlgGo').dataset.k=k;const d=$('dlg');if(!d.open){try{d.showModal()}catch(x){d.setAttribute('open','')}}}
+function goTo(k){const e=BY[k];if(!e)return;Object.assign(st,{q:'',sec:e.s,lens:'',fav:false,dis:false,side:false});['r','g','mo','ti','wi','who'].forEach(g=>st[g].clear());$('q').value='';sortVal=false;
+  const idx=ALL.filter(match).indexOf(e);shown=Math.max(40,idx+10);render();const el=document.querySelector('.card[data-k="'+k+'"]');if(el){el.classList.add('open');el.querySelector('.toggle').textContent='收起';el.scrollIntoView({block:'start',behavior:'smooth'})}}
+
+document.addEventListener('click',ev=>{
+  const t=ev.target.closest('button,h3');if(!t)return;
+  if(t.dataset.lens){st.lens=st.lens===t.dataset.lens?'':t.dataset.lens;shown=40;render();return}
+  if(t.dataset.f){const [g,v]=t.dataset.f.split(':');if(g==='x')st[v]=!st[v];else st[g].has(v)?st[g].delete(v):st[g].add(v);shown=40;render();return}
+  if(t.dataset.ref){ev.preventDefault();openDlg(t.dataset.ref);return}
+  if(t.dataset.sec!==undefined&&t.classList.contains('ref')){$('dlg').open&&$('dlg').close();st.sec=+t.dataset.sec;shown=40;render();window.scrollTo({top:0});return}
+  if(t.dataset.sec!==undefined){st.sec=+t.dataset.sec;shown=40;render();$('list').scrollIntoView({block:'start'});return}
+  if(t.hasAttribute('data-fav')){const k=t.closest('.card').dataset.k;FAV.has(k)?FAV.delete(k):FAV.add(k);saveFav();document.querySelectorAll('.card[data-k="'+k+'"] .star').forEach(s=>{s.setAttribute('aria-pressed',FAV.has(k));s.textContent=FAV.has(k)?'★':'☆'});toast(FAV.has(k)?'已收藏，共 '+FAV.size+' 条':'已取消收藏');return}
+  if(t.hasAttribute('data-open')){if(ev.target.closest('a,.ref'))return;const c=t.closest('.card');c.classList.toggle('open');c.querySelector('.toggle').textContent=c.classList.contains('open')?'收起':'展开成本、证据和来源';return}
+  if(t.id==='more'){shown+=40;render();return}
+});
+$('q').addEventListener('input',e=>{clearTimeout(render.h);render.h=setTimeout(()=>{st.q=e.target.value.trim();shown=40;render()},150)});
+$('sec').addEventListener('change',e=>{st.sec=+e.target.value;shown=40;render()});
+$('sort').addEventListener('click',()=>{sortVal=!sortVal;shown=40;render()});
+$('reset').addEventListener('click',()=>{Object.assign(st,{q:'',sec:0,lens:'',fav:false,dis:false,side:false});['r','g','mo','ti','wi','who'].forEach(g=>st[g].clear());$('q').value='';shown=40;render()});
+$('rand').addEventListener('click',()=>{const pool=ALL.filter(e=>e.r==='极高');if(!pool.length)return;const e=pool[Math.floor(Math.random()*pool.length)];openDlg(e.s+'-'+e.n)});
+$('dlgX').addEventListener('click',()=>$('dlg').close());
+$('dlg').addEventListener('click',e=>{if(e.target===$('dlg'))$('dlg').close()});
+$('dlgGo').addEventListener('click',()=>{const k=$('dlgGo').dataset.k;$('dlg').close();goTo(k)});
+
+fetch('data.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
+  SECS=d;let tot=0;for(const s of d)tot+=s.e.length;$('total').textContent=tot;for(const s of d)for(const e of s.e){e.hay=[e.t,e.h,e.cost,e.gain,e.note,e.src].join('\n').replace(/\*\*/g,'').toLowerCase();ALL.push(e);BY[e.s+'-'+e.n]=e}
+  $('sec').innerHTML='<option value="0">全部章节</option>'+d.map(s=>'<option value="'+s.n+'">'+s.n+'. '+esc(s.t.split('：')[0])+'</option>').join('');
+  render();
+}).catch(()=>{$('list').innerHTML='<p class="empty">数据没有载入成功，刷新页面再试一次。</p>'});
+}
+</script>
+<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
+</body>
+</html>
